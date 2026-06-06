@@ -1,0 +1,696 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDD - Data Design Document</title>
+</head>
+<body>
+<style>
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --border-radius-sm: 4px;
+    --border-radius-md: 6px;
+    --border-radius-lg: 10px;
+
+    --color-background-primary:   #ffffff;
+    --color-background-secondary: #f5f5f3;
+    --color-background-warning:   #fff8e6;
+    --color-background-info:      #e8f1fc;
+    --color-background-success:   #eaf6ee;
+    --color-background-danger:    #fdecea;
+
+    --color-text-primary:   #1a1a18;
+    --color-text-secondary: #3c3c3a;
+    --color-text-tertiary:  #7a7a74;
+    --color-text-warning:   #7a4700;
+    --color-text-info:      #0c447c;
+    --color-text-success:   #085041;
+    --color-text-danger:    #8b1a1a;
+
+    --color-border-primary:   #c8c6be;
+    --color-border-secondary: #dddbd3;
+    --color-border-tertiary:  #ebebeb;
+    --color-border-warning:   #f0c060;
+    --color-border-info:      #7ab3e8;
+    --color-border-danger:    #e8a0a0;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-background-primary:   #1e1e1c;
+      --color-background-secondary: #2a2a28;
+      --color-background-warning:   #3d2f0a;
+      --color-background-info:      #042c53;
+      --color-background-success:   #04342c;
+      --color-background-danger:    #3d1010;
+
+      --color-text-primary:   #f0efe8;
+      --color-text-secondary: #d3d1c7;
+      --color-text-tertiary:  #8a8880;
+      --color-text-warning:   #fac775;
+      --color-text-info:      #b5d4f4;
+      --color-text-success:   #9fe1cb;
+      --color-text-danger:    #f5c4c4;
+
+      --color-border-primary:   #484844;
+      --color-border-secondary: #3a3a38;
+      --color-border-tertiary:  #2e2e2c;
+      --color-border-warning:   #7a5500;
+      --color-border-info:      #1a5c9a;
+      --color-border-danger:    #7a2020;
+    }
+  }
+
+* { box-sizing: border-box; }
+body { margin: 0; padding: 16px 20px 40px; font-family: var(--font-sans, sans-serif); background: var(--color-background-primary); color: var(--color-text-primary); max-width: 800px; margin: 0 auto; }
+
+.rfc-header {
+  padding: 1.5rem 0 1rem;
+}
+
+.rfc-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.meta-card {
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 10px 14px;
+}
+
+.meta-label {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.meta-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-draft { background: var(--color-background-warning); color: var(--color-text-warning); }
+.status-review { background: var(--color-background-info); color: var(--color-text-info); }
+.status-approved { background: var(--color-background-success); color: var(--color-text-success); }
+.status-rejected { background: var(--color-background-danger); color: var(--color-text-danger); }
+
+.section {
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: var(--color-background-primary);
+  user-select: none;
+  gap: 10px;
+}
+
+.section-header:hover {
+  background: var(--color-background-secondary);
+}
+
+.section-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.section-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.section-subtitle {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.required-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  border: 0.5px solid;
+  flex-shrink: 0;
+}
+
+.req-obrig { border-color: var(--color-border-danger); color: var(--color-text-danger); }
+.req-opc   { border-color: var(--color-border-tertiary); color: var(--color-text-tertiary); }
+
+.chevron {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.chevron.open { transform: rotate(90deg); }
+
+.section-body {
+  padding: 0 16px;
+  border-top: 0.5px solid var(--color-border-tertiary);
+  background: var(--color-background-primary);
+  display: none;
+}
+
+.section-body.open {
+  display: block;
+  padding: 14px 16px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.field:last-child { margin-bottom: 0; }
+
+.field-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 5px;
+}
+
+.field-desc {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.field-example {
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  border-left: 2px solid var(--color-border-secondary);
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.tag-purple { background: #EEEDFE; color: #3C3489; }
+.tag-teal   { background: #E1F5EE; color: #085041; }
+.tag-coral  { background: #FAECE7; color: #4A1B0C; }
+.tag-amber  { background: #FAEEDA; color: #412402; }
+.tag-gray   { background: #F1EFE8; color: #2C2C2A; }
+.tag-blue   { background: #E6F1FB; color: #0C447C; }
+
+@media (prefers-color-scheme: dark) {
+  .tag-purple { background: #26215C; color: #CECBF6; }
+  .tag-teal   { background: #04342C; color: #9FE1CB; }
+  .tag-coral  { background: #4A1B0C; color: #F5C4B3; }
+  .tag-amber  { background: #412402; color: #FAC775; }
+  .tag-gray   { background: #2C2C2A; color: #D3D1C7; }
+  .tag-blue   { background: #042C53; color: #B5D4F4; }
+}
+
+.divider {
+  border: none;
+  border-top: 0.5px solid var(--color-border-tertiary);
+  margin: 12px 0;
+}
+
+.lifecycle {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.lc-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 80px;
+  gap: 4px;
+}
+
+.lc-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  border: 0.5px solid;
+  position: relative;
+  z-index: 1;
+}
+
+.lc-line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border-secondary);
+  align-self: flex-start;
+  margin-top: 14px;
+}
+
+.lc-label {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 1.5rem;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: var(--border-radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 0.5px solid var(--color-border-secondary);
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  transition: background 0.15s;
+}
+
+.btn:hover { background: var(--color-background-secondary); }
+
+.btn-primary {
+  background: var(--color-background-info);
+  color: var(--color-text-info);
+  border-color: var(--color-border-info);
+}
+
+.btn-primary:hover { opacity: 0.85; }
+</style>
+
+<h2 class="sr-only" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Data Design Document</h2>
+
+<div class="rfc-header">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px">DDD-2026-001</div>
+      <div style="font-size:18px;font-weight:500;color:var(--color-text-primary)">Data Design Document</div>
+    </div>
+    <span class="status-badge status-draft">● Rascunho</span>
+  </div>
+
+  <div class="rfc-meta">
+    <div class="meta-card">
+      <div class="meta-label">Autor</div>
+      <div class="meta-value">João Carneiro</div>
+    </div>
+    <div class="meta-card">
+      <div class="meta-label">Área</div>
+      <div class="meta-value">Analytics</div>
+    </div>
+    <div class="meta-card">
+      <div class="meta-label">Criado em</div>
+      <div class="meta-value">Jun 2026</div>
+    </div>
+    <div class="meta-card">
+      <div class="meta-label">Revisão até</div>
+      <div class="meta-value">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- Lifecycle -->
+<div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:6px;font-weight:500">Ciclo de vida do DDD</div>
+<div class="lifecycle">
+  <div class="lc-step">
+    <div class="lc-dot" style="background:var(--color-background-warning);color:var(--color-text-warning);border-color:var(--color-border-warning)">1</div>
+    <div class="lc-label">Rascunho</div>
+  </div>
+  <div class="lc-line"></div>
+  <div class="lc-step">
+    <div class="lc-dot" style="background:var(--color-background-secondary);color:var(--color-text-tertiary);border-color:var(--color-border-tertiary)">2</div>
+    <div class="lc-label">Em revisão</div>
+  </div>
+  <div class="lc-line"></div>
+  <div class="lc-step">
+    <div class="lc-dot" style="background:var(--color-background-secondary);color:var(--color-text-tertiary);border-color:var(--color-border-tertiary)">3</div>
+    <div class="lc-label">Aprovado</div>
+  </div>
+  <div class="lc-line"></div>
+  <div class="lc-step">
+    <div class="lc-dot" style="background:var(--color-background-secondary);color:var(--color-text-tertiary);border-color:var(--color-border-tertiary)">4</div>
+    <div class="lc-label">Em dev.</div>
+  </div>
+  <div class="lc-line"></div>
+  <div class="lc-step">
+    <div class="lc-dot" style="background:var(--color-background-secondary);color:var(--color-text-tertiary);border-color:var(--color-border-tertiary)">5</div>
+    <div class="lc-label">Entregue</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- Sections -->
+
+<!-- 1 -->
+<div class="section">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-left">
+      <div class="section-num" style="background:#E1F5EE;color:#085041">1</div>
+      <div>
+        <div class="section-title">Contexto e motivação</div>
+        <div class="section-subtitle">Por que isso precisa ser feito?</div>
+      </div>
+    </div>
+    <span class="required-badge req-obrig">Obrigatório</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-body">
+    <div class="field">
+      <div class="field-label">Problema de negócio</div>
+      <div class="field-desc">Descreva o problema, dor ou oportunidade. Quem é afetado? Qual o impacto atual de não ter isso?</div>
+      <div class="field-example">Ex.: "A equipe de gestão hospitalar não consegue monitorar o tempo médio de espera e a taxa de internação por classificação de risco no Pronto Atendimento em tempo real. Hoje os dados são consolidados manualmente a cada turno, gerando retrabalho e dificultando a identificação de gargalos assistenciais."</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Stakeholders</div>
+      <div class="field-desc">Quem solicitou? Quem será o consumidor final dos dados?</div>
+      <div class="tag-row">
+        <span class="tag tag-teal">Solicitante</span>
+        <span class="tag tag-purple">Consumidor do dado</span>
+        <span class="tag tag-gray">Data owner</span>
+        <span class="tag tag-blue">Revisor técnico</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2 -->
+<div class="section">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-left">
+      <div class="section-num" style="background:#EEEDFE;color:#3C3489">2</div>
+      <div>
+        <div class="section-title">Definição e escopo</div>
+        <div class="section-subtitle">O que será (e não será) feito</div>
+      </div>
+    </div>
+    <span class="required-badge req-obrig">Obrigatório</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-body">
+    <div class="field">
+      <div class="field-label">Objetivo</div>
+      <div class="field-desc">Em uma frase, o que essa entrega resolve?</div>
+      <div class="field-example">Ex.: "Criar um mart de internações que consolide dados de triagem, atendimento médico e desfecho clínico dos pacientes do Pronto Atendimento para análise por classificação de risco e especialidade."</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Dentro do escopo</div>
+      <div class="field-desc">Liste explicitamente o que será entregue.</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Fora do escopo</div>
+      <div class="field-desc">Liste o que <em>não</em> será feito nesta iteração. Isso evita scope creep.</div>
+      <div class="field-example">Ex.: "Fora do escopo: predição de reinternação com ML, dados de prontuário eletrônico completo (SADT/exames), integração com o dashboard de faturamento TISS."</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Critérios de aceite</div>
+      <div class="field-desc">Como sabemos que a entrega está pronta? Quem valida?</div>
+    </div>
+  </div>
+</div>
+
+<!-- 3 -->
+<div class="section">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-left">
+      <div class="section-num" style="background:#FAEEDA;color:#412402">3</div>
+      <div>
+        <div class="section-title">Fontes de dados e dependências</div>
+        <div class="section-subtitle">De onde vêm os dados?</div>
+      </div>
+    </div>
+    <span class="required-badge req-obrig">Obrigatório</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-body">
+    <div class="field">
+      <div class="field-label">Fontes primárias</div>
+      <div class="field-desc">Liste os sistemas de origem, tabelas brutas (raw) ou seeds que serão consumidos.</div>
+      <div class="field-example">Ex.: raw.his.atendimentos_pa, raw.his.triagem_manchester, raw.his.internacoes, stg.regulacao.leitos_disponiveis</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Qualidade e confiabilidade</div>
+      <div class="field-desc">Existe lacuna de dados? Quais são os riscos de qualidade conhecidos? Há SLA de atualização?</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Dependências externas</div>
+      <div class="field-desc">Há dependência de outro time, pipeline, ou RFC ainda não aprovado?</div>
+    </div>
+    <div class="field">
+      <div class="field-label">PII / LGPD / Sensibilidade</div>
+      <div class="field-desc">Os dados contêm informações pessoais ou sensíveis? Qual tratamento será aplicado?</div>
+      <div class="tag-row">
+        <span class="tag tag-coral">PII direto</span>
+        <span class="tag tag-amber">PII indireto</span>
+        <span class="tag tag-gray">Sem PII</span>
+        <span class="tag tag-teal">Anonimizado</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4 -->
+<div class="section">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-left">
+      <div class="section-num" style="background:#FAECE7;color:#4A1B0C">4</div>
+      <div>
+        <div class="section-title">Modelagem e design técnico</div>
+        <div class="section-subtitle">Como será construído?</div>
+      </div>
+    </div>
+    <span class="required-badge req-obrig">Obrigatório</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-body">
+    <div class="field">
+      <div class="field-label">Camada do modelo</div>
+      <div class="field-desc">Onde esse modelo se encaixa na arquitetura de dados?</div>
+      <div class="tag-row">
+        <span class="tag tag-gray">Staging</span>
+        <span class="tag tag-teal">Intermediate</span>
+        <span class="tag tag-purple">Mart</span>
+        <span class="tag tag-amber">Metrics layer</span>
+        <span class="tag tag-blue">Semantic model</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">Granularidade</div>
+      <div class="field-desc">Qual é o grão da tabela/modelo? Cada linha representa o quê?</div>
+      <div class="field-example">Ex.: "Um registro por atendimento no Pronto Atendimento (id_atendimento), contendo data/hora de entrada, classificação de risco, tempo de espera, desfecho e, quando houver, o número da internação gerada."</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Definição de métricas e regras de negócio</div>
+      <div class="field-desc">Liste e defina as métricas principais. Regras de deduplificação, filtros, janelas temporais, etc.</div>
+      <div class="field-example">Ex.: "Taxa de internação = atendimentos com desfecho 'internado' / total de atendimentos no período. Classificação de risco seguindo protocolo de Manchester (vermelho, laranja, amarelo, verde, azul). Atendimentos com saída a pedido (AMA) contabilizados separadamente."</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Estratégia de materialização</div>
+      <div class="field-desc">Table, view, incremental? Qual a frequência de atualização esperada?</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Diagrama / DAG simplificado</div>
+      <div class="field-desc">Esboço das dependências entre modelos (pode ser texto ou imagem).</div>
+    </div>
+  </div>
+</div>
+
+<!-- 5 -->
+<div class="section">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-left">
+      <div class="section-num" style="background:#E6F1FB;color:#0C447C">5</div>
+      <div>
+        <div class="section-title">Testes e qualidade de dados</div>
+        <div class="section-subtitle">Como garantir que o dado está correto?</div>
+      </div>
+    </div>
+    <span class="required-badge req-obrig">Obrigatório</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-body">
+    <div class="field">
+      <div class="field-label">Testes dbt planejados</div>
+      <div class="field-desc">Quais testes serão implementados nos modelos?</div>
+      <div class="tag-row">
+        <span class="tag tag-teal">not_null</span>
+        <span class="tag tag-teal">unique</span>
+        <span class="tag tag-purple">referential integrity</span>
+        <span class="tag tag-amber">accepted values</span>
+        <span class="tag tag-blue">custom sql test</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">Validação de negócio</div>
+      <div class="field-desc">Como o resultado será validado pelo stakeholder? Qual fonte de verdade será usada para comparação?</div>
+      <div class="field-example">Ex.: "Cruzar total de atendimentos e internações do mart com o censo diário do Pronto Atendimento referente a Maio/24. Tolerância: ±1% no volume de atendimentos e ±0,5 pp na taxa de internação."</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Monitoramento pós-entrega</div>
+      <div class="field-desc">Quais alertas ou monitors serão configurados em produção?</div>
+    </div>
+  </div>
+</div>
+
+<!-- 6 -->
+<div class="section">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-left">
+      <div class="section-num" style="background:#F1EFE8;color:#2C2C2A">6</div>
+      <div>
+        <div class="section-title">Impacto em modelos existentes</div>
+        <div class="section-subtitle">O que pode quebrar?</div>
+      </div>
+    </div>
+    <span class="required-badge req-obrig">Obrigatório</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-body">
+    <div class="field">
+      <div class="field-label">Modelos impactados</div>
+      <div class="field-desc">Algum modelo downstream será afetado? Algum modelo existente será depreciado ou alterado?</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Breaking changes</div>
+      <div class="field-desc">Há renomeação de colunas, mudança de granularidade, ou remoção de campos que consomidores usam hoje?</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Plano de migração</div>
+      <div class="field-desc">Como será feita a transição para quem consome o dado hoje?</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7 -->
+<div class="section">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-left">
+      <div class="section-num" style="background:#EAF3DE;color:#173404">7</div>
+      <div>
+        <div class="section-title">Documentação e exposição</div>
+        <div class="section-subtitle">Como o dado será descoberto e consumido?</div>
+      </div>
+    </div>
+    <span class="required-badge req-opc">Recomendado</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-body">
+    <div class="field">
+      <div class="field-label">Descrição no data catalog</div>
+      <div class="field-desc">Haverá descrição no dbt docs, DataHub, ou catálogo interno? Quem é responsável pela manutenção?</div>
+    </div>
+    <div class="field">
+      <div class="field-label">Consumidores previstos</div>
+      <div class="field-desc">Dashboard, API, time de ciência de dados, self-service BI?</div>
+      <div class="tag-row">
+        <span class="tag tag-purple">Dashboard</span>
+        <span class="tag tag-teal">Self-service BI</span>
+        <span class="tag tag-blue">Data Science</span>
+        <span class="tag tag-amber">API / Produto</span>
+        <span class="tag tag-coral">Reverse ETL</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">Owner do modelo</div>
+      <div class="field-desc">Quem será responsável por este modelo em produção?</div>
+    </div>
+  </div>
+</div>
+
+<!-- 8 -->
+<div class="section">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-left">
+      <div class="section-num" style="background:#FBEAF0;color:#4B1528">8</div>
+      <div>
+        <div class="section-title">Alternativas consideradas</div>
+        <div class="section-subtitle">Por que essa abordagem?</div>
+      </div>
+    </div>
+    <span class="required-badge req-opc">Opcional</span>
+    <span class="chevron">▶</span>
+  </div>
+  <div class="section-body">
+    <div class="field">
+      <div class="field-label">Alternativas avaliadas</div>
+      <div class="field-desc">Quais outras abordagens foram consideradas e por que foram descartadas?</div>
+      <div class="field-example">Ex.: "Opção 1: enriquecer o modelo existente fct_atendimentos (geral) → descartado pois mudaria a granularidade e quebraria 2 painéis de faturamento. Opção 2: view sem materialização → descartado pelo volume de registros (>5 M/ano) e latência inaceitável para o painel gerencial de turnos."</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggle(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+function sendPrompt(text) {
+  // no-op when opened standalone in a browser
+  console.log('Prompt:', text);
+}
+</script>
+</body>
+</html>
